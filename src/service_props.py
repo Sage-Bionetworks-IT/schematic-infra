@@ -10,7 +10,7 @@ class ServiceProps:
     container_memory: the container application memory
     container_location:
       supports "path://" for building container from local (i.e. path://docker/MyContainer)
-      supports docker registry references (i.e. ghcr.io/sage-bionetworks/src-thumbor:latest)
+      supports docker registry references (i.e. ghcr.io/sage-bionetworks/schematic-thumbor:latest)
     container_env_vars: a json dictionary of environment variables to pass into the container
       i.e. {"EnvA": "EnvValueA", "EnvB": "EnvValueB"}
     """

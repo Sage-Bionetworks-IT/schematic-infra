@@ -36,10 +36,10 @@ ecs_stack = EcsStack(
 ecs_stack.add_dependency(network_stack)
 
 mariadb_props = ServiceProps(
-    "src-mariadb",
+    "schematic-mariadb",
     3306,
     512,
-    f"ghcr.io/sage-bionetworks/src-mariadb:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-mariadb:{image_version}",
     {
         "MARIADB_USER": "maria",
         "MARIADB_PASSWORD": secrets["MARIADB_PASSWORD"],
@@ -56,10 +56,10 @@ mariadb_stack = ServiceStack(
 )
 
 elasticsearch_props = ServiceProps(
-    "src-elasticsearch",
+    "schematic-elasticsearch",
     9200,
     2048,
-    f"ghcr.io/sage-bionetworks/src-elasticsearch:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-elasticsearch:{image_version}",
     {
         "bootstrap.memory_lock": "true",
         "discovery.type": "single-node",  # https://stackoverflow.com/a/68253868
@@ -76,10 +76,10 @@ elasticsearch_stack = ServiceStack(
 )
 
 thumbor_props = ServiceProps(
-    "src-thumbor",
+    "schematic-thumbor",
     8889,
     512,
-    f"ghcr.io/sage-bionetworks/src-thumbor:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-thumbor:{image_version}",
     {
         "LOG_LEVEL": "info",
         "PORT": "8889",
@@ -113,16 +113,16 @@ thumbor_stack = ServiceStack(
 thumbor_stack.add_dependency(bucket_stack)
 
 config_server_props = ServiceProps(
-    "src-config-server",
+    "schematic-config-server",
     8090,
     1024,
-    f"ghcr.io/sage-bionetworks/src-config-server:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-config-server:{image_version}",
     {
         "GIT_DEFAULT_LABEL": "test-2",
         "GIT_HOST_KEY_ALGORITHM": "ssh-ed25519",
         "GIT_HOST_KEY": secrets["GIT_HOST_KEY"],
         "GIT_PRIVATE_KEY": secrets["GIT_PRIVATE_KEY"],
-        "GIT_URI": "git@github.com:Sage-Bionetworks/src-config-server-repository.git",
+        "GIT_URI": "git@github.com:Sage-Bionetworks/schematic-config-server-repository.git",
         "SERVER_PORT": "8090",
     },
 )
@@ -136,10 +136,10 @@ config_server_stack = ServiceStack(
 )
 
 service_registry_props = ServiceProps(
-    "src-service-registry",
+    "schematic-service-registry",
     8081,
     1024,
-    f"ghcr.io/sage-bionetworks/src-service-registry:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-service-registry:{image_version}",
     {
         "SERVER_PORT": "8081",
         "DEFAULT_ZONE": "http://localhost:8081/eureka",
@@ -157,10 +157,10 @@ service_registry_stack = ServiceStack(
 service_registry_stack.add_dependency(config_server_stack)
 
 zipkin_props = ServiceProps(
-    "src-zipkin",
+    "schematic-zipkin",
     9411,
     512,
-    f"ghcr.io/sage-bionetworks/src-zipkin:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-zipkin:{image_version}",
     {},
 )
 
@@ -173,10 +173,10 @@ zipkin_stack = ServiceStack(
 )
 
 image_service_props = ServiceProps(
-    "src-image-service",
+    "schematic-image-service",
     8086,
     1024,
-    f"ghcr.io/sage-bionetworks/src-image-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-image-service:{image_version}",
     {
         "SERVER_PORT": "8086",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -199,10 +199,10 @@ image_service_stack.add_dependency(thumbor_stack)
 image_service_stack.add_dependency(zipkin_stack)
 
 challenge_service_props = ServiceProps(
-    "src-challenge-service",
+    "schematic-challenge-service",
     8085,
     1024,
-    f"ghcr.io/sage-bionetworks/src-challenge-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-challenge-service:{image_version}",
     {
         "SERVER_PORT": "8085",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -210,7 +210,7 @@ challenge_service_props = ServiceProps(
         "KEYCLOAK_URL": "http://openchallenges-keycloak:8080",
         "SPRING_DATASOURCE_USERNAME": "maria",
         "SPRING_DATASOURCE_PASSWORD": secrets["MARIADB_PASSWORD"],
-        "DB_URL": "jdbc:mysql://src-mariadb:3306/challenge_service?allowLoadLocalInfile=true",
+        "DB_URL": "jdbc:mysql://schematic-mariadb:3306/challenge_service?allowLoadLocalInfile=true",
         "DB_PLATFORMS_CSV_PATH": "/workspace/BOOT-INF/classes/db/platforms.csv",
         "DB_CHALLENGES_CSV_PATH": "/workspace/BOOT-INF/classes/db/challenges.csv",
         "DB_CONTRIBUTION_ROLES_CSV_PATH": "/workspace/BOOT-INF/classes/db/contribution_roles.csv",
@@ -237,10 +237,10 @@ challenge_service_stack.add_dependency(zipkin_stack)
 
 
 organization_service_props = ServiceProps(
-    "src-organization-service",
+    "schematic-organization-service",
     8084,
     1024,
-    f"ghcr.io/sage-bionetworks/src-organization-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-organization-service:{image_version}",
     {
         "SERVER_PORT": "8084",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -248,7 +248,7 @@ organization_service_props = ServiceProps(
         "SERVICE_REGISTRY_URL": "http://openchallenges-service-registry:8081/eureka",
         "SPRING_DATASOURCE_USERNAME": "maria",
         "SPRING_DATASOURCE_PASSWORD": secrets["MARIADB_PASSWORD"],
-        "DB_URL": "jdbc:mysql://src-mariadb:3306/organization_service?allowLoadLocalInfile=true",
+        "DB_URL": "jdbc:mysql://schematic-mariadb:3306/organization_service?allowLoadLocalInfile=true",
         "DB_ORGANIZATIONS_CSV_PATH": "/workspace/BOOT-INF/classes/db/organizations.csv",
         "DB_CONTRIBUTION_ROLES_CSV_PATH": "/workspace/BOOT-INF/classes/db/contribution_roles.csv",
         "OPENCHALLENGES_ORGANIZATION_SERVICE_IS_DEPLOYED_ON_AWS": "true",
@@ -268,10 +268,10 @@ organization_service_stack.add_dependency(elasticsearch_stack)
 organization_service_stack.add_dependency(zipkin_stack)
 
 api_gateway_props = ServiceProps(
-    "src-api-gateway",
+    "schematic-api-gateway",
     8082,
     1024,
-    f"ghcr.io/sage-bionetworks/src-api-gateway:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-api-gateway:{image_version}",
     {
         "SERVER_PORT": "8082",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -291,10 +291,10 @@ api_gateway_stack = ServiceStack(
 api_gateway_stack.add_dependency(service_registry_stack)
 
 oc_app_props = ServiceProps(
-    "src-app",
+    "schematic-app",
     4200,
     1024,
-    f"ghcr.io/sage-bionetworks/src-app:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-app:{image_version}",
     {
         "API_DOCS_URL": f"https://{fully_qualified_domain_name}/api-docs",
         "APP_VERSION": "1.0.0-alpha",
@@ -323,10 +323,10 @@ load_balancer_stack = LoadBalancerStack(
 )
 
 api_docs_props = ServiceProps(
-    "src-api-docs",
+    "schematic-api-docs",
     8010,
     256,
-    f"ghcr.io/sage-bionetworks/src-api-docs:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-api-docs:{image_version}",
     {"PORT": "8010"},
 )
 api_docs_stack = ServiceStack(
@@ -338,20 +338,20 @@ api_docs_stack = ServiceStack(
 )
 
 apex_service_props = ServiceProps(
-    "src-apex",
+    "schematic-apex",
     8000,
     200,
-    f"ghcr.io/sage-bionetworks/src-apex:{image_version}",
+    f"ghcr.io/sage-bionetworks/schematic-apex:{image_version}",
     {
-        "API_DOCS_HOST": "src-api-docs",
+        "API_DOCS_HOST": "schematic-api-docs",
         "API_DOCS_PORT": "8010",
-        "API_GATEWAY_HOST": "src-api-gateway",
+        "API_GATEWAY_HOST": "schematic-api-gateway",
         "API_GATEWAY_PORT": "8082",
-        "APP_HOST": "src-app",
+        "APP_HOST": "schematic-app",
         "APP_PORT": "4200",
-        "THUMBOR_HOST": "src-thumbor",
+        "THUMBOR_HOST": "schematic-thumbor",
         "THUMBOR_PORT": "8889",
-        "ZIPKIN_HOST": "src-zipkin",
+        "ZIPKIN_HOST": "schematic-zipkin",
         "ZIPKIN_PORT": "9411",
     },
 )

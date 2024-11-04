@@ -108,11 +108,11 @@ Set an environment in cdk.json in `context` section of cdk.json:
   "context": {
     "dev": {
         "VPC_CIDR": "10.255.192.0/24",
-        "FQDN": "dev.src.io"
+        "FQDN": "dev.schematic.io"
     },
     "prod": {
         "VPC_CIDR": "10.255.194.0/24",
-        "FQDN": "prod.src.io"
+        "FQDN": "prod.schematic.io"
     },
   }
 ```

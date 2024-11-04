@@ -59,12 +59,12 @@ def get_ssm_secrets(param_store_secret_refs: dict) -> dict:
 
     Example param_store_secret_refs:
     {
-        "MARIADB_PASSWORD": "/src/MARIADB_PASSWORD",
-        "GIT_PRIVATE_KEY": "/src/GIT_PRIVATE_KEY"
+        "MARIADB_PASSWORD": "/schematic/MARIADB_PASSWORD",
+        "GIT_PRIVATE_KEY": "/schematic/GIT_PRIVATE_KEY"
     }
 
-    Retrieve from SSM parameter store "/src/MARIADB_PASSWORD" and assign it to MARIADB_PASSWORD
-    Retrieve from SSM parameter store "/src/GIT_PRIVATE_KEY" and assign it to GIT_PRIVATE_KEY
+    Retrieve from SSM parameter store "/schematic/MARIADB_PASSWORD" and assign it to MARIADB_PASSWORD
+    Retrieve from SSM parameter store "/schematic/GIT_PRIVATE_KEY" and assign it to GIT_PRIVATE_KEY
 
     Example returned value:
     {

@@ -136,7 +136,7 @@ class ServiceStack(cdk.Stack):
             self.service.add_volume(self.volume)
 
             self.volume.mount_in(
-                # should be mounted at src-mariadb:/data/db
+                # should be mounted at schematic-mariadb:/data/db
                 self.container,
                 container_path="/data/db",
                 read_only=False,
