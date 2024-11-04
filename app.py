@@ -1,19 +1,19 @@
 import aws_cdk as cdk
 
-from openchallenges.bucket_stack import BucketStack
-from openchallenges.network_stack import NetworkStack
-from openchallenges.ecs_stack import EcsStack
-from openchallenges.service_stack import ServiceStack
-from openchallenges.service_stack import LoadBalancedServiceStack
-from openchallenges.load_balancer_stack import LoadBalancerStack
-from openchallenges.service_props import ServiceProps
-import openchallenges.utils as utils
+from src.bucket_stack import BucketStack
+from src.network_stack import NetworkStack
+from src.ecs_stack import EcsStack
+from src.service_stack import ServiceStack
+from src.service_stack import LoadBalancedServiceStack
+from src.load_balancer_stack import LoadBalancerStack
+from src.service_props import ServiceProps
+import src.utils as utils
 
 app = cdk.App()
 
 # get the environment
 environment = utils.get_environment()
-stack_name_prefix = f"openchallenges-{environment}"
+stack_name_prefix = f"schematic-{environment}"
 image_version = "0.0.11"
 
 # get VARS from cdk.json
@@ -36,10 +36,10 @@ ecs_stack = EcsStack(
 ecs_stack.add_dependency(network_stack)
 
 mariadb_props = ServiceProps(
-    "openchallenges-mariadb",
+    "src-mariadb",
     3306,
     512,
-    f"ghcr.io/sage-bionetworks/openchallenges-mariadb:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-mariadb:{image_version}",
     {
         "MARIADB_USER": "maria",
         "MARIADB_PASSWORD": secrets["MARIADB_PASSWORD"],
@@ -56,10 +56,10 @@ mariadb_stack = ServiceStack(
 )
 
 elasticsearch_props = ServiceProps(
-    "openchallenges-elasticsearch",
+    "src-elasticsearch",
     9200,
     2048,
-    f"ghcr.io/sage-bionetworks/openchallenges-elasticsearch:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-elasticsearch:{image_version}",
     {
         "bootstrap.memory_lock": "true",
         "discovery.type": "single-node",  # https://stackoverflow.com/a/68253868
@@ -76,10 +76,10 @@ elasticsearch_stack = ServiceStack(
 )
 
 thumbor_props = ServiceProps(
-    "openchallenges-thumbor",
+    "src-thumbor",
     8889,
     512,
-    f"ghcr.io/sage-bionetworks/openchallenges-thumbor:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-thumbor:{image_version}",
     {
         "LOG_LEVEL": "info",
         "PORT": "8889",
@@ -113,16 +113,16 @@ thumbor_stack = ServiceStack(
 thumbor_stack.add_dependency(bucket_stack)
 
 config_server_props = ServiceProps(
-    "openchallenges-config-server",
+    "src-config-server",
     8090,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-config-server:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-config-server:{image_version}",
     {
         "GIT_DEFAULT_LABEL": "test-2",
         "GIT_HOST_KEY_ALGORITHM": "ssh-ed25519",
         "GIT_HOST_KEY": secrets["GIT_HOST_KEY"],
         "GIT_PRIVATE_KEY": secrets["GIT_PRIVATE_KEY"],
-        "GIT_URI": "git@github.com:Sage-Bionetworks/openchallenges-config-server-repository.git",
+        "GIT_URI": "git@github.com:Sage-Bionetworks/src-config-server-repository.git",
         "SERVER_PORT": "8090",
     },
 )
@@ -136,10 +136,10 @@ config_server_stack = ServiceStack(
 )
 
 service_registry_props = ServiceProps(
-    "openchallenges-service-registry",
+    "src-service-registry",
     8081,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-service-registry:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-service-registry:{image_version}",
     {
         "SERVER_PORT": "8081",
         "DEFAULT_ZONE": "http://localhost:8081/eureka",
@@ -157,10 +157,10 @@ service_registry_stack = ServiceStack(
 service_registry_stack.add_dependency(config_server_stack)
 
 zipkin_props = ServiceProps(
-    "openchallenges-zipkin",
+    "src-zipkin",
     9411,
     512,
-    f"ghcr.io/sage-bionetworks/openchallenges-zipkin:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-zipkin:{image_version}",
     {},
 )
 
@@ -173,10 +173,10 @@ zipkin_stack = ServiceStack(
 )
 
 image_service_props = ServiceProps(
-    "openchallenges-image-service",
+    "src-image-service",
     8086,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-image-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-image-service:{image_version}",
     {
         "SERVER_PORT": "8086",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -199,10 +199,10 @@ image_service_stack.add_dependency(thumbor_stack)
 image_service_stack.add_dependency(zipkin_stack)
 
 challenge_service_props = ServiceProps(
-    "openchallenges-challenge-service",
+    "src-challenge-service",
     8085,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-challenge-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-challenge-service:{image_version}",
     {
         "SERVER_PORT": "8085",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -210,7 +210,7 @@ challenge_service_props = ServiceProps(
         "KEYCLOAK_URL": "http://openchallenges-keycloak:8080",
         "SPRING_DATASOURCE_USERNAME": "maria",
         "SPRING_DATASOURCE_PASSWORD": secrets["MARIADB_PASSWORD"],
-        "DB_URL": "jdbc:mysql://openchallenges-mariadb:3306/challenge_service?allowLoadLocalInfile=true",
+        "DB_URL": "jdbc:mysql://src-mariadb:3306/challenge_service?allowLoadLocalInfile=true",
         "DB_PLATFORMS_CSV_PATH": "/workspace/BOOT-INF/classes/db/platforms.csv",
         "DB_CHALLENGES_CSV_PATH": "/workspace/BOOT-INF/classes/db/challenges.csv",
         "DB_CONTRIBUTION_ROLES_CSV_PATH": "/workspace/BOOT-INF/classes/db/contribution_roles.csv",
@@ -237,10 +237,10 @@ challenge_service_stack.add_dependency(zipkin_stack)
 
 
 organization_service_props = ServiceProps(
-    "openchallenges-organization-service",
+    "src-organization-service",
     8084,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-organization-service:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-organization-service:{image_version}",
     {
         "SERVER_PORT": "8084",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -248,7 +248,7 @@ organization_service_props = ServiceProps(
         "SERVICE_REGISTRY_URL": "http://openchallenges-service-registry:8081/eureka",
         "SPRING_DATASOURCE_USERNAME": "maria",
         "SPRING_DATASOURCE_PASSWORD": secrets["MARIADB_PASSWORD"],
-        "DB_URL": "jdbc:mysql://openchallenges-mariadb:3306/organization_service?allowLoadLocalInfile=true",
+        "DB_URL": "jdbc:mysql://src-mariadb:3306/organization_service?allowLoadLocalInfile=true",
         "DB_ORGANIZATIONS_CSV_PATH": "/workspace/BOOT-INF/classes/db/organizations.csv",
         "DB_CONTRIBUTION_ROLES_CSV_PATH": "/workspace/BOOT-INF/classes/db/contribution_roles.csv",
         "OPENCHALLENGES_ORGANIZATION_SERVICE_IS_DEPLOYED_ON_AWS": "true",
@@ -268,10 +268,10 @@ organization_service_stack.add_dependency(elasticsearch_stack)
 organization_service_stack.add_dependency(zipkin_stack)
 
 api_gateway_props = ServiceProps(
-    "openchallenges-api-gateway",
+    "src-api-gateway",
     8082,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-api-gateway:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-api-gateway:{image_version}",
     {
         "SERVER_PORT": "8082",
         "SPRING_CLOUD_CONFIG_URI": "http://openchallenges-config-server:8090",
@@ -291,10 +291,10 @@ api_gateway_stack = ServiceStack(
 api_gateway_stack.add_dependency(service_registry_stack)
 
 oc_app_props = ServiceProps(
-    "openchallenges-app",
+    "src-app",
     4200,
     1024,
-    f"ghcr.io/sage-bionetworks/openchallenges-app:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-app:{image_version}",
     {
         "API_DOCS_URL": f"https://{fully_qualified_domain_name}/api-docs",
         "APP_VERSION": "1.0.0-alpha",
@@ -323,10 +323,10 @@ load_balancer_stack = LoadBalancerStack(
 )
 
 api_docs_props = ServiceProps(
-    "openchallenges-api-docs",
+    "src-api-docs",
     8010,
     256,
-    f"ghcr.io/sage-bionetworks/openchallenges-api-docs:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-api-docs:{image_version}",
     {"PORT": "8010"},
 )
 api_docs_stack = ServiceStack(
@@ -338,20 +338,20 @@ api_docs_stack = ServiceStack(
 )
 
 apex_service_props = ServiceProps(
-    "openchallenges-apex",
+    "src-apex",
     8000,
     200,
-    f"ghcr.io/sage-bionetworks/openchallenges-apex:{image_version}",
+    f"ghcr.io/sage-bionetworks/src-apex:{image_version}",
     {
-        "API_DOCS_HOST": "openchallenges-api-docs",
+        "API_DOCS_HOST": "src-api-docs",
         "API_DOCS_PORT": "8010",
-        "API_GATEWAY_HOST": "openchallenges-api-gateway",
+        "API_GATEWAY_HOST": "src-api-gateway",
         "API_GATEWAY_PORT": "8082",
-        "APP_HOST": "openchallenges-app",
+        "APP_HOST": "src-app",
         "APP_PORT": "4200",
-        "THUMBOR_HOST": "openchallenges-thumbor",
+        "THUMBOR_HOST": "src-thumbor",
         "THUMBOR_PORT": "8889",
-        "ZIPKIN_HOST": "openchallenges-zipkin",
+        "ZIPKIN_HOST": "src-zipkin",
         "ZIPKIN_PORT": "9411",
     },
 )

@@ -20,7 +20,7 @@ class BucketStack(cdk.Stack):
             self,
             "ImageBucket",
             # TODO: do we need specific bucket name?
-            # bucket_name="openchallenges-img",    # name is unique within a region
+            # bucket_name="src-img",    # name is unique within a region
             object_ownership=s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
         )
         cdk.CfnOutput(

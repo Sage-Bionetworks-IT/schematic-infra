@@ -1,7 +1,7 @@
 
-# OpenChallenges AWS CDK app
+# Schematic AWS CDK app
 
-AWS CDK app for deploying [OpenChallenges](https://openchallenges.io/).
+AWS CDK app for deploying [Schematic](schematic.api.sagebionetworks.org).
 
 # Perequisites
 
@@ -73,7 +73,7 @@ command.
 
 ## Static Analysis
 
-As a pre-deployment step we syntatically validate the CDK json, yaml and
+As a pre-deployment step we syntactically validate the CDK json, yaml and
 python files with [pre-commit](https://pre-commit.com).
 
 Please install pre-commit, once installed the file validations will
@@ -107,12 +107,12 @@ Set an environment in cdk.json in `context` section of cdk.json:
 ```json
   "context": {
     "dev": {
-        "VPC_CIDR": "10.255.92.0/24",
-        "FQDN": "dev.openchallenges.io"
+        "VPC_CIDR": "10.255.192.0/24",
+        "FQDN": "dev.src.io"
     },
     "prod": {
-        "VPC_CIDR": "10.255.94.0/24",
-        "FQDN": "prod.openchallenges.io"
+        "VPC_CIDR": "10.255.194.0/24",
+        "FQDN": "prod.src.io"
     },
   }
 ```
@@ -225,14 +225,13 @@ SECRETS=ssm cdk --context  "secrets"='{"MARIADB_PASSWORD": "/test/mariadb-root-p
 
 ## Bootstrap
 
-There are a few items that need to be manually bootstrapped before deploying the
-OpenChallenges application.
+There are a few items that need to be manually bootstrapped before deploying the application.
 
-* Add OC [secrets](#Secrets) to either the cdk.json or the AWS System Manager parameter store
+* Add application [secrets](#Secrets) to either the cdk.json or the AWS System Manager parameter store
 * Create an [ACM certificate for the application](#Certificates) using the AWS Certificates Manager
 * Add the Certificate ARN to the cdk.json
-* Update references to the OC docker images in [app.py](app.py)
-  (i.e. `ghcr.io/sage-bionetworks/openchallenges-xxx:<tag>`)
+* Update references to the docker images in [app.py](app.py)
+  (i.e. `ghcr.io/sage-bionetworks/schematic-xxx:<tag>`)
 * (Optional) Update the `ServiceProps` objects in [app.py](app.py) with parameters specific to
   each container.
 
@@ -270,8 +269,8 @@ aws --profile itsandbox-dev sso login
 
 ## Deploy
 
-Deployment requires setting up an [AWS profile](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html) then executing the
-following command:
+Deployment requires setting up an [AWS profile](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html)
+then executing the following command:
 
 ```console
 AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 ENV=dev SECRETS=ssm cdk deploy --all
@@ -295,25 +294,24 @@ Example to get an interactive shell run into a container:
 
 ```console
 AWS_PROFILE=itsandbox-dev AWS_DEFAULT_REGION=us-east-1 aws ecs execute-command \
-  --cluster OpenChallengesEcs-ClusterEB0386A7-BygXkQgSvdjY \
+  --cluster SchematicEcs-ClusterEB0386A7-BygXkQgSvdjY \
   --task a2916461f65747f390fd3e29f1b387d8 \
-  --container openchallenges-mariadb \
+  --container schematic-mariadb \
   --command "/bin/sh" --interactive
 ```
 
 
 # CI Workflow
 
-This repo has been set up to use Github Actions CI to continously deploy the
-OpenChallenges app.
+This repo has been set up to use Github Actions CI to continuously deploy the application.
 
 The workflow for continuous integration:
 
 * Create PR from the git dev branch
 * PR is reviewed and approved
 * PR is merged
-* CI deploys changes to the dev environment (dev.openchallenges.io) in the org-sagebase-openchallenges-dev account.
+* CI deploys changes to the dev environment (dev.schematic.io) in the AWS dev account.
 * Changes are promoted (or merged) to the git stage branch.
-* CI deploys changes to the staging environment (stage.openchallenges.io) in the org-sagebase-openchallenges-prod account.
+* CI deploys changes to the staging environment (stage.schematic.io) in the AWS prod account.
 * Changes are promoted (or merged) to the git prod branch.
-* CI deploys changes to the prod environment (prod.openchallenges.io) in the org-sagebase-openchallenges-prod account.
+* CI deploys changes to the prod environment (prod.schematic.io) in the AWS prod account.

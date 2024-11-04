@@ -18,7 +18,7 @@ class CertStack(cdk.Stack):
             self,
             "Certificate",
             domain_name=self.zone.zone_name,
-            certificate_name="new-infra-openchallenges",  # Optionally provide an certificate name
+            certificate_name="new-infra-src",  # Optionally provide an certificate name
             validation=acm.CertificateValidation.from_dns(self.zone),
         )
         cdk.CfnOutput(self, "cert-arn", value=self.cert.certificate_arn)
