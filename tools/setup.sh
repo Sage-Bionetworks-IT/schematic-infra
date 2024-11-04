@@ -7,9 +7,9 @@ set -euxo pipefail
 npm install -g aws-cdk@2.151.0
 
 # Install Python dependencies
-pip install --upgrade pip
 python -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt -r requirements-dev.txt
 
 # Install git hooks
