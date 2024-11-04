@@ -13,7 +13,7 @@ jobs:
   aws-deploy:
     uses: "./.github/workflows/aws-deploy.yaml"
     with:
-      role-to-assume: "arn:aws:iam::528757786185:role/sagebase-github-oidc-src-deploy"
+      role-to-assume: "arn:aws:iam::878654265857:role/sagebase-github-oidc-sage-bionetworks-schematic-infra"
       role-session-name: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}
       environment: "prod"
       secrets-location: "ssm"
