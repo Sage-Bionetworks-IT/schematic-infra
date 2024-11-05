@@ -64,19 +64,19 @@
     "@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
     "@aws-cdk/aws-eks:nodegroupNameAttribute": true,
     "dev": {
-        "VPC_CIDR": "10.255.92.0/24",
-        "FQDN": "dev.openchallenges.io",
-        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:221082174873:certificate/4bd9e6ac-0951-485e-a132-e842aaf2ec58"
+        "VPC_CIDR": "10.254.192.0/24",
+        "FQDN": "dev.schematic.io",
+        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:631692904429:certificate/0e9682f6-3ffa-46fb-9671-b6349f5164d6"
       },
     "stage": {
-        "VPC_CIDR": "10.255.93.0/24",
-        "FQDN": "stage.openchallenges.io",
-        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:528757786185:certificate/7018402f-7774-4890-84d8-43b8748eba53"
+        "VPC_CIDR": "10.254.193.0/24",
+        "FQDN": "stage.schematic.io",
+        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970"
       },
     "prod": {
-        "VPC_CIDR": "10.255.94.0/24",
-        "FQDN": "prod.openchallenges.io",
-        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:528757786185:certificate/6d591cce-5097-42ef-9d3d-e746f01e33a7"
+        "VPC_CIDR": "10.254.194.0/24",
+        "FQDN": "prod.schematic.io",
+        "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970"
       },
     "secrets": {
         "MARIADB_PASSWORD": "/openchallenges/MARIADB_PASSWORD",

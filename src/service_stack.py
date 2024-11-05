@@ -12,7 +12,7 @@ from aws_cdk import (
 )
 
 from constructs import Construct
-from openchallenges.service_props import ServiceProps
+from src.service_props import ServiceProps
 
 ALB_HTTP_LISTENER_PORT = 80
 ALB_HTTPS_LISTENER_PORT = 443
@@ -136,7 +136,7 @@ class ServiceStack(cdk.Stack):
             self.service.add_volume(self.volume)
 
             self.volume.mount_in(
-                # should be mounted at openchallenges-mariadb:/data/db
+                # should be mounted at schematic-mariadb:/data/db
                 self.container,
                 container_path="/data/db",
                 read_only=False,

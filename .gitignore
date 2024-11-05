@@ -117,6 +117,3 @@ node_modules/
 # sceptre
 sceptre/**/templates/remote/
 .dump/
-
-# local configs
-.openchallenges

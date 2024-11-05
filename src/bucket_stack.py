@@ -7,7 +7,7 @@ from constructs import Construct
 
 class BucketStack(cdk.Stack):
     """
-    Openchallenge Buckets
+    Application Buckets
     """
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -20,7 +20,7 @@ class BucketStack(cdk.Stack):
             self,
             "ImageBucket",
             # TODO: do we need specific bucket name?
-            # bucket_name="openchallenges-img",    # name is unique within a region
+            # bucket_name="schematic-img",    # name is unique within a region
             object_ownership=s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
         )
         cdk.CfnOutput(
