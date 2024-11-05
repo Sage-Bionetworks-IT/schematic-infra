@@ -5,7 +5,6 @@ from aws_cdk import (
     aws_ecs as ecs,
     aws_ec2 as ec2,
     aws_logs as logs,
-    Size as size,
     aws_elasticloadbalancingv2 as elbv2,
     aws_certificatemanager as acm,
     aws_iam as iam,
@@ -117,30 +116,6 @@ class ServiceStack(cdk.Stack):
                 ],
             ),
         )
-
-        # mount volume for DB
-        if "mariadb" in construct_id:
-            self.volume = ecs.ServiceManagedVolume(
-                self,
-                "ServiceVolume",
-                name=props.container_name,
-                managed_ebs_volume=ecs.ServiceManagedEBSVolumeConfiguration(
-                    size=size.gibibytes(30),
-                    volume_type=ec2.EbsDeviceVolumeType.GP3,
-                ),
-            )
-
-            self.task_definition.add_volume(
-                name=props.container_name, configured_at_launch=True
-            )
-            self.service.add_volume(self.volume)
-
-            self.volume.mount_in(
-                # should be mounted at schematic-mariadb:/data/db
-                self.container,
-                container_path="/data/db",
-                read_only=False,
-            )
 
 
 class LoadBalancedServiceStack(ServiceStack):
