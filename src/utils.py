@@ -1,6 +1,3 @@
-import boto3
-
-from botocore.exceptions import ClientError
 from os import environ
 
 
@@ -24,25 +21,3 @@ def get_environment() -> str:
         )
 
     return environment
-
-
-def get_ssm_secret(param_store_ref: str) -> str:
-    """
-    Retrieve a secret from the AWS SSM parameter store.
-
-    param_store_ref is a key/ssm param name for a secret.
-
-    Example param_store_ref:
-        "/app/dev/MARIADB_PASSWORD"
-
-    Retrieve the value from the parameter "/app/dev/MARIADB_PASSWORD"
-    in the AWS SSM parameter store
-    """
-    ssm = boto3.client("ssm")
-    try:
-        response = ssm.get_parameter(Name=param_store_ref, WithDecryption=True)
-        value = response["Parameter"]["Value"]
-    except ClientError as e:
-        raise e
-
-    return value

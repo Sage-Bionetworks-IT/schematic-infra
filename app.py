@@ -43,19 +43,9 @@ app_service_props = ServiceProps(
     "schematic-app",
     443,
     4096,
-    "ghcr.io/sage-bionetworks/schematic:v24.10.2",
-    {
-        "project_id": "sagebio-integration-testing",
-        "client_email": "sage-bio-integration-test-dev@sagebio-integration-testing.iam.gserviceaccount.com",
-        "client_id": utils.get_ssm_secret("/schematic/dev/client_id"),
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sage-bio-integration-test-dev%40sagebio-integration-testing.iam.gserviceaccount.com",  # noqa
-        "universe_domain": "googleapis.com",
-        "private_key_id": utils.get_ssm_secret("/schematic/dev/private_key_id"),
-        "private_key": utils.get_ssm_secret("/schematic/dev/private_key"),
-    },
+    "ghcr.io/sage-bionetworks/schematic:v0.1.90-beta",
+    {},
+    "schematic-dev-DockerFargateStack/dev/ecs",
 )
 
 app_service_stack = LoadBalancedServiceStack(
