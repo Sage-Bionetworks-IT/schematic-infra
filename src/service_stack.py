@@ -75,6 +75,7 @@ class ServiceStack(cdk.Stack):
             image = ecs.ContainerImage.from_asset(location)
 
         def _get_secret(scope: Construct, id: str, name: str) -> sm.Secret:
+            """Get a secret from the AWS secrets manager"""
             isecret = sm.Secret.from_secret_name_v2(scope, id, name)
             return ecs.Secret.from_secrets_manager(isecret)
 

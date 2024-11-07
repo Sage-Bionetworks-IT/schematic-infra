@@ -142,28 +142,29 @@ Once created take the ARN of the certificate and add it to a context in cdk.json
 
 # Secrets
 
-Secrets can be manually created in the [AWS SSM parameter store](./docs/aws-parameter-store.png)
-Then it can be retrieved using the `get_ssm_secret` method in [utils.py](./src/utils.py).
+Secrets can be manually created in the
+[AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html)
 
-Parameter store references can be passed into the ServiceProp objects:
+To pass secrets to a container set the secrets manager `secret name`
+when creating a ServiceProp objects:
 
 ```python
 app_service_props = ServiceProps(
-    "app", 443, 1024, f"ghcr.io/sage-bionetworks/app:v0.1.90-beta",
-    {
-        "MARIADB_USER": utils.get_ssm_secret("/app/dev/MARIADB_USER"),
-        "MARIADB_PASSWORD": utils.get_ssm_secret("/app/dev/MARIADB_PASSWORD")
-    },
+    "app", 443, 1024, f"ghcr.io/sage-bionetworks/app:v1.0", container_env_vars={},
+    container_secret_name="app/dev/DATABASE"
 )
 ```
 
-where the values of these KVs (e.g. `/app/dev/MARIADB_PASSWORD`) refer to SSM parameter which
-must be created manually.
-
-![AWS secrets manager](docs/aws-parameter-store.png)
+For example, the KVs for `app/dev/DATABASE` could be:
+```json
+{
+    "DATABASE_USER": "maria",
+    "DATABASE_PASSWORD": "password"
+}
+```
 
 > [!NOTE]
-> Retrieving secrets requires access to the AWS Service Systems Manager
+> Retrieving secrets requires access to the AWS Secrets Manager
 
 # Deployment
 
@@ -171,7 +172,7 @@ must be created manually.
 
 There are a few items that need to be manually bootstrapped before deploying the application.
 
-* Add secrets to the AWS System Manager parameter store
+* Add secrets to the AWS Secrets Manager
 * Create an [ACM certificate for the application](#Certificates) using the AWS Certificates Manager
 * Add the Certificate ARN to the cdk.json
 * Update references to the docker images in [app.py](app.py)
