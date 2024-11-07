@@ -56,7 +56,7 @@ app_service_stack = LoadBalancedServiceStack(
     app_service_props,
     load_balancer_stack.alb,
     certificate_arn,
-    health_check_path="/v1/ui/",
+    health_check_path="/health",
     health_check_interval=5,
 )
 
