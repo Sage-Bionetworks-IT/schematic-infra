@@ -179,7 +179,7 @@ class LoadBalancedServiceStack(ServiceStack):
         https_listener.add_targets(
             "HttpsTarget",
             port=props.container_port,
-            protocol=elbv2.ApplicationProtocol.HTTP,
+            protocol=elbv2.ApplicationProtocol.HTTPS,
             targets=[self.service],
             health_check=elbv2.HealthCheck(
                 path=health_check_path, interval=duration.minutes(health_check_interval)
