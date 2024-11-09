@@ -42,7 +42,7 @@ load_balancer_stack = LoadBalancerStack(
 app_service_props = ServiceProps(
     "schematic-app",
     443,
-    4096,
+    1024,
     "ghcr.io/sage-bionetworks/schematic:v0.1.90-beta",
     {},
     "schematic-dev-DockerFargateStack/dev/ecs",
