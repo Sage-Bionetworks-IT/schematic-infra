@@ -1,34 +1,63 @@
 import aws_cdk as cdk
-import src.utils as utils
 
+from os import environ
 from src.network_stack import NetworkStack
 from src.ecs_stack import EcsStack
 from src.service_stack import LoadBalancedServiceStack
 from src.load_balancer_stack import LoadBalancerStack
 from src.service_props import ServiceProps
 
-# get the environment
-environment = utils.get_environment()
-stack_name_prefix = f"schematic-{environment}"
+# get the environment and set environment specific variables
+VALID_ENVIRONMENTS = ["dev", "stage", "prod"]
+environment = environ.get("ENV")
+match environment:
+    case "prod":
+        environment_variables = {
+            "VPC_CIDR": "10.254.194.0/24",
+            "FQDN": "prod.schematic.io",
+            "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970",
+            "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+        }
+    case "stage":
+        environment_variables = {
+            "VPC_CIDR": "10.254.193.0/24",
+            "FQDN": "stage.schematic.io",
+            "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970",
+            "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+        }
+    case "dev":
+        environment_variables = {
+            "VPC_CIDR": "10.254.192.0/24",
+            "FQDN": "dev.schematic.io",
+            "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:631692904429:certificate/0e9682f6-3ffa-46fb-9671-b6349f5164d6",
+            "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+        }
+    case _:
+        valid_envs_str = ",".join(VALID_ENVIRONMENTS)
+        raise SystemExit(
+            f"Must set environment variable `ENV` to one of {valid_envs_str}"
+        )
 
+stack_name_prefix = f"schematic-{environment}"
+environment_tags = environment_variables["TAGS"]
+
+# Define stacks
 cdk_app = cdk.App()
-context_vars = cdk_app.node.try_get_context(environment)
-fully_qualified_domain_name = context_vars["FQDN"]
-subdomain, domain = fully_qualified_domain_name.split(".", 1)
-vpc_cidr = context_vars["VPC_CIDR"]
-certificate_arn = context_vars["CERTIFICATE_ARN"]
-env_tags = context_vars["TAGS"]
 
 # recursively apply tags to all stack resources
-if env_tags:
-    for key, value in env_tags.items():
+if environment_tags:
+    for key, value in environment_tags.items():
         cdk.Tags.of(cdk_app).add(key, value)
 
-# Generate stacks
-network_stack = NetworkStack(cdk_app, f"{stack_name_prefix}-network", vpc_cidr)
+network_stack = NetworkStack(
+    cdk_app, f"{stack_name_prefix}-network", environment_variables["VPC_CIDR"]
+)
 
 ecs_stack = EcsStack(
-    cdk_app, f"{stack_name_prefix}-ecs", network_stack.vpc, fully_qualified_domain_name
+    cdk_app,
+    f"{stack_name_prefix}-ecs",
+    network_stack.vpc,
+    environment_variables["FQDN"],
 )
 
 # From AWS docs https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-connect-concepts-deploy.html
@@ -45,7 +74,7 @@ app_service_props = ServiceProps(
     1024,
     "ghcr.io/sage-bionetworks/schematic:v0.1.90-beta",
     {},
-    "schematic-dev-DockerFargateStack/dev/ecs",
+    f"{stack_name_prefix}-DockerFargateStack/{environment}/ecs",
 )
 
 app_service_stack = LoadBalancedServiceStack(
@@ -55,9 +84,10 @@ app_service_stack = LoadBalancedServiceStack(
     ecs_stack.cluster,
     app_service_props,
     load_balancer_stack.alb,
-    certificate_arn,
+    environment_variables["CERTIFICATE_ARN"],
     health_check_path="/health",
     health_check_interval=5,
 )
 
+# Generate stacks
 cdk_app.synth()

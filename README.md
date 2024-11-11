@@ -83,7 +83,7 @@ execute the validations by running `pre-commit run --all-files`.
 Verify CDK to Cloudformation conversion by running [cdk synth]:
 
 ```console
-cdk synth
+ENV=dev cdk synth
 ```
 
 The Cloudformation output is saved to the `cdk.out` folder
@@ -99,23 +99,18 @@ python -m pytest tests/ -s -v
 
 # Environments
 
-Deployment context is set in the [cdk.json](cdk.json) file.  An `ENV` environment variable must be
-set to tell the CDK which environment's variables to use when synthesising or deploying the stacks.
-The deployment context is the place to set infrastructure variables.
+An `ENV` environment variable must be set when running the `cdk` command tell the
+CDK which environment's variables to use when synthesising or deploying the stacks.
 
-Set an environment in cdk.json in `context` section of cdk.json:
+Set environment variables for each environment in the [app.py](./app.py) file:
 
-```json
-  "context": {
-    "dev": {
-        "VPC_CIDR": "10.254.192.0/24",
-        "FQDN": "dev.schematic.io"
-    },
-    "prod": {
-        "VPC_CIDR": "10.254.194.0/24",
-        "FQDN": "prod.schematic.io"
-    },
-  }
+```python
+environment_variables = {
+    "VPC_CIDR": "10.254.192.0/24",
+    "FQDN": "dev.schematic.io",
+    "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:XXXXXXXXXXX:certificate/0e9682f6-3ffa-46fb-9671-b6349f5164d6",
+    "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+}
 ```
 
 For example, synthesis with the `prod` environment variables:
@@ -128,15 +123,7 @@ ENV=prod cdk synth
 
 Certificates to set up HTTPS connections should be created manually in AWS certificate manager.
 This is not automated due to AWS requiring manual verification of the domain ownership.
-Once created take the ARN of the certificate and add it to a context in cdk.json.
-
-```json
-  "context": {
-    "dev": {
-      "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:XXXXXXXXX:certificate/76ed5a71-4aa8-4cc1-9db6-aa7a322ec077"
-    }
-  }
-```
+Once created take the ARN of the certificate and set that ARN in environment_variables.
 
 ![ACM certificate](docs/acm-certificate.png)
 
@@ -174,7 +161,7 @@ There are a few items that need to be manually bootstrapped before deploying the
 
 * Add secrets to the AWS Secrets Manager
 * Create an [ACM certificate for the application](#Certificates) using the AWS Certificates Manager
-* Add the Certificate ARN to the cdk.json
+* Update environment_variables in [app.py](app.py) with variable specific to each environment.
 * Update references to the docker images in [app.py](app.py)
   (i.e. `ghcr.io/sage-bionetworks/app-xxx:<tag>`)
 * (Optional) Update the `ServiceProps` objects in [app.py](app.py) with parameters specific to
