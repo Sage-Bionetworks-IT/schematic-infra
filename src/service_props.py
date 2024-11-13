@@ -1,4 +1,26 @@
+from dataclasses import dataclass
+from typing import List, Optional, Sequence
+
+from aws_cdk import aws_ecs as ecs
+
 CONTAINER_LOCATION_PATH_ID = "path://"
+
+
+@dataclass
+class ServiceSecret:
+    """
+    Holds onto configuration for the secrets to be used in the container.
+
+    Attributes:
+      secret_name: The name of the secret as stored in the AWS Secrets Manager.
+      environment_key: The name of the environment variable to be set within the container.
+    """
+
+    secret_name: str
+    """The name of the secret as stored in the AWS Secrets Manager."""
+
+    environment_key: str
+    """The name of the environment variable to be set within the container."""
 
 
 class ServiceProps:
@@ -13,9 +35,11 @@ class ServiceProps:
     container_memory: the container application memory
     container_env_vars: a json dictionary of environment variables to pass into the container
       i.e. {"EnvA": "EnvValueA", "EnvB": "EnvValueB"}
-    container_secret_name: the secret's name in the AWS secrets manager
+    container_secrets: List of `ServiceSecret` resources to pull from AWS secrets manager
     auto_scale_min_capacity: the fargate auto scaling minimum capacity
     auto_scale_max_capacity: the fargate auto scaling maximum capacity
+    container_command: Optional commands to run during the container startup
+    container_healthcheck: Optional health check configuration for the container
     """
 
     def __init__(
@@ -25,9 +49,11 @@ class ServiceProps:
         container_port: int,
         container_memory: int = 512,
         container_env_vars: dict = None,
-        container_secret_name: str = None,
+        container_secrets: List[ServiceSecret] = None,
         auto_scale_min_capacity: int = 1,
         auto_scale_max_capacity: int = 1,
+        container_command: Optional[Sequence[str]] = None,
+        container_healthcheck: Optional[ecs.HealthCheck] = None,
     ) -> None:
         self.container_name = container_name
         self.container_port = container_port
@@ -37,8 +63,18 @@ class ServiceProps:
                 CONTAINER_LOCATION_PATH_ID
             )
         self.container_location = container_location
+
         if container_env_vars is None:
             self.container_env_vars = {}
-        self.container_secret_name = container_secret_name
+        else:
+            self.container_env_vars = container_env_vars
+
+        if container_secrets is None:
+            self.container_secrets = []
+        else:
+            self.container_secrets = container_secrets
+
         self.auto_scale_min_capacity = auto_scale_min_capacity
         self.auto_scale_max_capacity = auto_scale_max_capacity
+        self.container_command = container_command
+        self.container_healthcheck = container_healthcheck

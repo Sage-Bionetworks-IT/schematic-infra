@@ -1,11 +1,12 @@
+from os import environ
+
 import aws_cdk as cdk
 
-from os import environ
-from src.network_stack import NetworkStack
 from src.ecs_stack import EcsStack
-from src.service_stack import LoadBalancedServiceStack
 from src.load_balancer_stack import LoadBalancerStack
-from src.service_props import ServiceProps
+from src.network_stack import NetworkStack
+from src.service_props import ServiceProps, ServiceSecret
+from src.service_stack import LoadBalancedServiceStack, ServiceStack
 
 # get the environment and set environment specific variables
 VALID_ENVIRONMENTS = ["dev", "stage", "prod"]
@@ -35,7 +36,7 @@ match environment:
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
         raise SystemExit(
-            f"Must set environment variable `ENV` to one of {valid_envs_str}"
+            f"Must set environment variable `ENV` to one of {valid_envs_str}. Currently set to {environment}."
         )
 
 stack_name_prefix = f"schematic-{environment}"
@@ -68,12 +69,27 @@ load_balancer_stack = LoadBalancerStack(
     cdk_app, f"{stack_name_prefix}-load-balancer", network_stack.vpc
 )
 
+telemetry_environment_variables = {
+    "TRACING_EXPORT_FORMAT": "otlp",
+    "LOGGING_EXPORT_FORMAT": "otlp",
+    "TRACING_SERVICE_NAME": "schematic",
+    "LOGGING_SERVICE_NAME": "schematic",
+    "DEPLOYMENT_ENVIRONMENT": environment,
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector:4318",
+}
+
 app_service_props = ServiceProps(
-    "schematic-app",
-    "ghcr.io/sage-bionetworks/schematic:v0.1.90-beta",
-    443,
+    container_name="schematic-app",
+    container_location="ghcr.io/sage-bionetworks/schematic:v0.1.94-beta",
+    container_port=443,
     container_memory=1024,
-    container_secret_name=f"{stack_name_prefix}-DockerFargateStack/{environment}/ecs",
+    container_env_vars=telemetry_environment_variables,
+    container_secrets=[
+        ServiceSecret(
+            secret_name=f"{stack_name_prefix}-DockerFargateStack/{environment}/ecs",
+            environment_key="SECRETS_MANAGER_SECRETS",
+        )
+    ],
 )
 
 app_service_stack = LoadBalancedServiceStack(
@@ -88,5 +104,27 @@ app_service_stack = LoadBalancedServiceStack(
     health_check_interval=5,
 )
 
-# Generate stacks
+app_service_props_otel_collector = ServiceProps(
+    container_name="otel-collector",
+    container_port=4318,
+    container_memory=512,
+    container_location="ghcr.io/sage-bionetworks/sage-otel-collector:0.0.1",
+    container_secrets=[
+        ServiceSecret(
+            secret_name=f"{stack_name_prefix}-DockerFargateStack/{environment}/opentelemetry-collector-configuration",
+            environment_key="CONFIG_CONTENT",
+        )
+    ],
+    container_command=["--config", "env:CONFIG_CONTENT"],
+    container_healthcheck=cdk.aws_ecs.HealthCheck(command=["CMD", "/healthcheck"]),
+)
+
+app_service_stack_otel_collector = ServiceStack(
+    scope=cdk_app,
+    construct_id=f"{stack_name_prefix}-otel-collector",
+    vpc=network_stack.vpc,
+    cluster=ecs_stack.cluster,
+    props=app_service_props_otel_collector,
+)
+
 cdk_app.synth()
