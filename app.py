@@ -109,7 +109,6 @@ app_service_props_otel_collector = ServiceProps(
     container_port=4318,
     container_memory=512,
     container_location="ghcr.io/sage-bionetworks/sage-otel-collector:v0.0.4",
-    container_env_vars={},
     container_secrets=[
         ServiceSecret(
             secret_name=f"{stack_name_prefix}-DockerFargateStack/{environment}/opentelemetry-collector-configuration",

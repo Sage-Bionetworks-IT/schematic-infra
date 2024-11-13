@@ -144,7 +144,6 @@ app_service_props = ServiceProps(
     container_port=443,
     container_memory=1024,
     container_location="ghcr.io/sage-bionetworks/app:v1.0",
-    container_env_vars={},
     container_secrets=[
         ServiceSecret(
             secret_name="app/dev/DATABASE",
