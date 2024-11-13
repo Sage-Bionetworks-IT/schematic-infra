@@ -24,7 +24,7 @@ on:
       environment:
         required: true
         type: string
-        default: "dev"
+        default: ${{ github.ref_name }}
 
 jobs:
   deploy:
