@@ -1,17 +1,14 @@
 import aws_cdk as cdk
-
-from aws_cdk import (
-    Duration as duration,
-    aws_ecs as ecs,
-    aws_ec2 as ec2,
-    aws_logs as logs,
-    aws_elasticloadbalancingv2 as elbv2,
-    aws_certificatemanager as acm,
-    aws_iam as iam,
-    aws_secretsmanager as sm,
-)
-
+from aws_cdk import Duration as duration
+from aws_cdk import aws_certificatemanager as acm
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecs as ecs
+from aws_cdk import aws_elasticloadbalancingv2 as elbv2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
+
 from src.service_props import ServiceProps
 
 ALB_HTTP_LISTENER_PORT = 80
@@ -79,16 +76,18 @@ class ServiceStack(cdk.Stack):
             isecret = sm.Secret.from_secret_name_v2(scope, id, name)
             return ecs.Secret.from_secrets_manager(isecret)
 
+        secrets = {}
+        for secret in props.container_secrets:
+            secrets[secret.environment_key] = _get_secret(
+                self, f"sm-secrets-{secret.environment_key}", secret.secret_name
+            )
+
         self.container = self.task_definition.add_container(
             props.container_name,
             image=image,
             memory_limit_mib=props.container_memory,
             environment=props.container_env_vars,
-            secrets={
-                "SECRETS_MANAGER_SECRETS": _get_secret(
-                    self, "sm-secrets", props.container_secret_name
-                )
-            },
+            secrets=secrets,
             port_mappings=[
                 ecs.PortMapping(
                     name=props.container_name,
@@ -100,6 +99,8 @@ class ServiceStack(cdk.Stack):
                 stream_prefix=f"{construct_id}",
                 log_retention=logs.RetentionDays.FOUR_MONTHS,
             ),
+            command=props.container_command,
+            health_check=props.container_healthcheck,
         )
 
         self.security_group = ec2.SecurityGroup(self, "SecurityGroup", vpc=vpc)

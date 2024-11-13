@@ -130,15 +130,31 @@ Once created take the ARN of the certificate and set that ARN in environment_var
 # Secrets
 
 Secrets can be manually created in the
-[AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html)
+[AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html).
+When naming your secret make sure that the secret does not end in a pattern that matches
+`-??????`, this will cause issues with how AWS CDK looks up secrets.
 
-To pass secrets to a container set the secrets manager `secret name`
-when creating a ServiceProp objects:
-
+To pass secrets to a container set the secrets manager `container_secrets`
+when creating a `ServiceProp` object. You'll be creating a list of `ServiceSecret` objects:
 ```python
+from src.service_props import ServiceProps, ServiceSecret
+
 app_service_props = ServiceProps(
-    "app", 443, 1024, f"ghcr.io/sage-bionetworks/app:v1.0", container_env_vars={},
-    container_secret_name="app/dev/DATABASE"
+    container_name="app",
+    container_port=443,
+    container_memory=1024,
+    container_location="ghcr.io/sage-bionetworks/app:v1.0",
+    container_env_vars={},
+    container_secrets=[
+        ServiceSecret(
+            secret_name="app/dev/DATABASE",
+            environment_key="NAME_OF_ENVIRONMENT_VARIABLE_SET_FOR_CONTAINER",
+        ),
+        ServiceSecret(
+            secret_name="app/dev/PASSWORD",
+            environment_key="SINGLE_VALUE_SECRET",
+        )
+    ]
 )
 ```
 
@@ -149,6 +165,26 @@ For example, the KVs for `app/dev/DATABASE` could be:
     "DATABASE_PASSWORD": "password"
 }
 ```
+
+And the value for `app/dev/PASSWORD` could be: `password`
+
+In the application (Python) code the secrets may be loaded into a dict using code like:
+
+```python
+import json
+import os
+
+all_secrets_dict = json.loads(os.environ["NAME_OF_ENVIRONMENT_VARIABLE_SET_FOR_CONTAINER"])
+```
+
+In the case of a single value you may load the value like:
+
+```python
+import os
+
+my_secret = os.environ.get("SINGLE_VALUE_SECRET", None)
+```
+
 
 > [!NOTE]
 > Retrieving secrets requires access to the AWS Secrets Manager
@@ -247,3 +283,101 @@ The workflow for continuous integration:
 * CI deploys changes to the staging environment (stage.app.io) in the AWS prod account.
 * Changes are promoted (or merged) to the git prod branch.
 * CI deploys changes to the prod environment (prod.app.io) in the AWS prod account.
+
+# Creation/Forwarding of OpenTelemetry data
+Schematic has been instrumented with a mix of
+[automationally instrumented libraries](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation)
+and [manual traces](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html).
+In addition it's been configured at startup to [conditionally turn on trace/log exports](https://github.com/Sage-Bionetworks/schematic/blob/778bf54db9c5b4de0af334c4efe034b3dde0b348/schematic/__init__.py#L82-L139)
+depending on how a few environment variables are set. The combination of all these lets
+the schematic container running in ECS export telemetry data out of the container to be
+ingested somewhere else for long-term storage.
+
+
+Schematic is configured to send it's telemetry data to the OpenTelemetry Collector
+which then handles forwarding that data on to it's final destination. This is
+accomplished by setting a few environment variables on the Schematic container such as:
+
+```python
+from src.service_props import ServiceProps
+
+telemetry_environment_variables = {
+    "TRACING_EXPORT_FORMAT": "otlp",
+    "LOGGING_EXPORT_FORMAT": "otlp",
+    "TRACING_SERVICE_NAME": "schematic",
+    "LOGGING_SERVICE_NAME": "schematic",
+    "DEPLOYMENT_ENVIRONMENT": environment,
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector:4318",
+}
+
+app_service_props = ServiceProps(
+    container_name="schematic-app",
+    container_location="ghcr.io/sage-bionetworks/app:v1.0"
+    container_port=443,
+    container_memory=1024,
+    container_env_vars=telemetry_environment_variables,
+)
+```
+
+
+## OpenTelemetry Collector
+The OpenTelemetry collector is deployed into ECS and is running in
+[Gateway mode](https://opentelemetry.io/docs/collector/deployment/gateway/). This
+configuration allows for a single collector to be the central point for all telemetry
+data leaving the context of this deployed infrastructure. This central point allows us
+to configure where [authorization can be attached](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/oauth2clientauthextension),
+[requests batched up](https://github.com/open-telemetry/opentelemetry-collector/blob/main/processor/batchprocessor/README.md), or [sensitive data be stripped](https://docs.honeycomb.io/send-data/opentelemetry/collector/handle-sensitive-information/).
+
+
+The configuration of all of these elements stems from [supplying a `config.yaml` file](https://opentelemetry.io/docs/collector/configuration/) as
+an environment variable to the otel collector container at startup. This config file is
+set up to be sourced from AWS Secrets manager. To accomplish this a filled out copy of
+the following configuration file is stored in AWS Secrets manager (As Plaintext)
+with the name `f"{stack_name_prefix}-DockerFargateStack/{environment}/opentelemetry-collector-configuration"`:
+
+```
+extensions:
+  health_check:
+    endpoint: "0.0.0.0:13133"
+    path: "/"
+    check_collector_pipeline:
+      enabled: true
+      interval: "5m"
+      exporter_failure_threshold: 5
+  oauth2client:
+    client_id: FILL_ME_IN
+    client_secret: FILL_ME_IN
+    endpoint_params:
+      audience: FILL_ME_IN
+    token_url: FILL_ME_IN
+    # timeout for the token client
+    timeout: 2s
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 50
+
+exporters:
+  otlphttp/withauth:
+    endpoint: FILL_ME_IN
+    auth:
+      authenticator: oauth2client
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/withauth]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/withauth]
+  extensions: [health_check, oauth2client]
+```
