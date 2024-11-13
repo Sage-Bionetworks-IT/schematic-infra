@@ -115,6 +115,7 @@ class ServiceStack(cdk.Stack):
             cluster=cluster,
             task_definition=self.task_definition,
             enable_execute_command=True,
+            circuit_breaker=ecs.DeploymentCircuitBreaker(enable=True, rollback=True),
             security_groups=([self.security_group]),
             service_connect_configuration=ecs.ServiceConnectProps(
                 log_driver=ecs.LogDrivers.aws_logs(stream_prefix=f"{construct_id}"),
@@ -126,6 +127,20 @@ class ServiceStack(cdk.Stack):
                     )
                 ],
             ),
+        )
+
+        # Setup AutoScaling policy
+        scaling = self.service.auto_scale_task_count(
+            min_capacity=props.auto_scale_min_capacity,
+            max_capacity=props.auto_scale_max_capacity,
+        )
+        scaling.scale_on_cpu_utilization(
+            "CpuScaling",
+            target_utilization_percent=50,
+        )
+        scaling.scale_on_memory_utilization(
+            "MemoryScaling",
+            target_utilization_percent=50,
         )
 
 
