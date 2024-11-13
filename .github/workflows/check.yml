@@ -25,6 +25,8 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Generate cloudformation
         uses: youyo/aws-cdk-github-actions@v2
+        env:
+          ENV: dev
         with:
           cdk_subcommand: 'synth'
           actions_comment: false
