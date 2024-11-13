@@ -289,7 +289,7 @@ Schematic has been instrumented with a mix of
 [automationally instrumented libraries](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation)
 and [manual traces](https://opentelemetry-python.readthedocs.io/en/latest/api/trace.html).
 In addition it's been configured at startup to [conditionally turn on trace/log exports](https://github.com/Sage-Bionetworks/schematic/blob/778bf54db9c5b4de0af334c4efe034b3dde0b348/schematic/__init__.py#L82-L139)
-depending on how a few environment variables are set. The combination of all these lets
+depending on how a few environment variables are set. The combination of these items let
 the schematic container running in ECS export telemetry data out of the container to be
 ingested somewhere else for long-term storage.
 
