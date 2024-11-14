@@ -18,6 +18,7 @@ match environment:
             "FQDN": "prod.schematic.io",
             "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970",
             "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+            "SCHEMATIC_CONTAINER_LOCATION": "ghcr.io/sage-bionetworks/schematic:v0.1.94-beta",
         }
     case "stage":
         environment_variables = {
@@ -25,6 +26,7 @@ match environment:
             "FQDN": "stage.schematic.io",
             "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:878654265857:certificate/d11fba3c-1957-48ba-9be0-8b1f460ee970",
             "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+            "SCHEMATIC_CONTAINER_LOCATION": "ghcr.io/sage-bionetworks/schematic:v0.1.94-beta",
         }
     case "dev":
         environment_variables = {
@@ -32,6 +34,7 @@ match environment:
             "FQDN": "dev.schematic.io",
             "CERTIFICATE_ARN": "arn:aws:acm:us-east-1:631692904429:certificate/0e9682f6-3ffa-46fb-9671-b6349f5164d6",
             "TAGS": {"CostCenter": "NO PROGRAM / 000000"},
+            "SCHEMATIC_CONTAINER_LOCATION": "ghcr.io/sage-bionetworks/schematic:v0.1.94-beta",
         }
     case _:
         valid_envs_str = ",".join(VALID_ENVIRONMENTS)
@@ -66,7 +69,10 @@ ecs_stack = EcsStack(
 # client service. The services need to be created in this order to prevent an time period when the frontend
 # client service is running and available the public, but a backend isn't.
 load_balancer_stack = LoadBalancerStack(
-    cdk_app, f"{stack_name_prefix}-load-balancer", network_stack.vpc
+    scope=cdk_app,
+    construct_id=f"{stack_name_prefix}-load-balancer",
+    vpc=network_stack.vpc,
+    idle_timeout_seconds=300,
 )
 
 telemetry_environment_variables = {
@@ -80,9 +86,9 @@ telemetry_environment_variables = {
 
 app_service_props = ServiceProps(
     container_name="schematic-app",
-    container_location="ghcr.io/sage-bionetworks/schematic:v0.1.94-beta",
+    container_location=environment_variables["SCHEMATIC_CONTAINER_LOCATION"],
     container_port=443,
-    container_memory=1024,
+    container_memory=4096,
     container_env_vars=telemetry_environment_variables,
     container_secrets=[
         ServiceSecret(
@@ -90,6 +96,8 @@ app_service_props = ServiceProps(
             environment_key="SECRETS_MANAGER_SECRETS",
         )
     ],
+    auto_scale_min_capacity=3,
+    auto_scale_max_capacity=5,
 )
 
 app_service_stack = LoadBalancedServiceStack(
