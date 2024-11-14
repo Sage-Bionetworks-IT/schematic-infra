@@ -22,8 +22,8 @@ on:
         type: number
         default: 3600
       environment:
+        required: true
         type: string
-        default: ${{ github.ref_name }}
 
 jobs:
   deploy:
