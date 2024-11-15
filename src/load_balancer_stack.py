@@ -14,11 +14,20 @@ class LoadBalancerStack(cdk.Stack):
     """
 
     def __init__(
-        self, scope: Construct, construct_id: str, vpc: ec2.Vpc, **kwargs
+        self,
+        scope: Construct,
+        construct_id: str,
+        vpc: ec2.Vpc,
+        idle_timeout_seconds: int,
+        **kwargs
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         self.alb = elbv2.ApplicationLoadBalancer(
-            self, "AppLoadBalancer", vpc=vpc, internet_facing=True
+            self,
+            "AppLoadBalancer",
+            vpc=vpc,
+            idle_timeout=cdk.Duration.seconds(idle_timeout_seconds),
+            internet_facing=True,
         )
         cdk.CfnOutput(self, "dns", value=self.alb.load_balancer_dns_name)
