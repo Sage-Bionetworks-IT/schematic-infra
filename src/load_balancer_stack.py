@@ -19,7 +19,7 @@ class LoadBalancerStack(cdk.Stack):
         construct_id: str,
         vpc: ec2.Vpc,
         idle_timeout_seconds: int,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -30,4 +30,6 @@ class LoadBalancerStack(cdk.Stack):
             idle_timeout=cdk.Duration.seconds(idle_timeout_seconds),
             internet_facing=True,
         )
-        cdk.CfnOutput(self, "dns", value=self.alb.load_balancer_dns_name)
+        cdk.CfnOutput(
+            self, f"{construct_id}-dns", value=self.alb.load_balancer_dns_name
+        )
