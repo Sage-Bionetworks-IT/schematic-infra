@@ -31,5 +31,8 @@ class LoadBalancerStack(cdk.Stack):
             internet_facing=True,
         )
         cdk.CfnOutput(
-            self, f"{construct_id}-dns", value=self.alb.load_balancer_dns_name
+            self,
+            "LoadBalancerDns",
+            value=self.alb.load_balancer_dns_name,
+            export_name=f"{construct_id}-dns",
         )
