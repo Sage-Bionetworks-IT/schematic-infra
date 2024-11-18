@@ -34,5 +34,5 @@ class LoadBalancerStack(cdk.Stack):
             self,
             "LoadBalancerDns",
             value=self.alb.load_balancer_dns_name,
-            export_name=f"{construct_id}-dns",
+            export_name=f"{construct_id}-load-balancer-dns",
         )
